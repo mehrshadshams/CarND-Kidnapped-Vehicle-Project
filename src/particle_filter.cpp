@@ -115,6 +115,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	for (unsigned int k = 0; k < num_particles; k++) {
 		Particle p = particles[k];
 
+		// Translate observations to map space
 		LandmarkObs obs;
 		vector<LandmarkObs> trans_observations;
 		for (unsigned int i = 0; i < observations.size(); i++) {
@@ -130,6 +131,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			trans_observations.push_back(trans_obs);
 		}
 
+		// Update particle weights
 		p.weight = 1.0;
 
 		std::vector<int> associations;
@@ -139,8 +141,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		for (unsigned int i = 0; i < trans_observations.size(); i++) {
 			LandmarkObs obs = trans_observations[i];
 
+			// Find closest landmark for each transformed observation
 			unsigned int closest_landmark_idx = -1;
-			double min_distance = 1000000;
+			double min_distance = numeric_limits<double>::max();
 			
 			for (unsigned int j = 0; j < map_landmarks.landmark_list.size(); j++) {
 				double distance_to_landmark = dist(obs.x, obs.y, map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f);
@@ -155,6 +158,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double landmark_x = map_landmarks.landmark_list[closest_landmark_idx].x_f;
 			double landmark_y = map_landmarks.landmark_list[closest_landmark_idx].y_f;
 
+			// Computing weight using multivariate-gaussian
 			double gaussian_norm = 2 * M_PI * sigma_x * sigma_y;
 			double exponent = (pow(x - landmark_x, 2) / sigma_x_sq) + (pow(y - landmark_y, 2) / sigma_y_sq);
 			double w = exp(-exponent) / gaussian_norm;
