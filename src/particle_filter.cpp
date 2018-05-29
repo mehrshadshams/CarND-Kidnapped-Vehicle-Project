@@ -125,6 +125,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double sin_theta = sin(p.theta);
 			double cos_theta = cos(p.theta);
 
+			// Homogenous Transformation
 			trans_obs.x = p.x + (cos_theta * obs.x) - (sin_theta * obs.y);
 			trans_obs.y = p.y + (sin_theta * obs.x) + (cos_theta * obs.y);
 
@@ -147,7 +148,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			
 			for (unsigned int j = 0; j < map_landmarks.landmark_list.size(); j++) {
 				double distance_to_landmark = dist(obs.x, obs.y, map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f);
-				if (distance_to_landmark < min_distance) {
+				
+				// only take landmark into account if the distance of particle to the landmark is less than sensor range
+				if (distance_to_landmark <= sensor_range && distance_to_landmark < min_distance) {
 					min_distance = distance_to_landmark;
 					closest_landmark_idx = j;
 				}
@@ -165,6 +168,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			if (w > 0) {
 				p.weight *= w;
+			} else {
+				// some epsilon value for changing the weights
+				p.weight *= 0.00001;
 			}
 
 			associations.push_back(map_landmarks.landmark_list[closest_landmark_idx].id_i);
