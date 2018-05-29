@@ -155,22 +155,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 					closest_landmark_idx = j;
 				}
 			}
-			
-			double x = obs.x;
-			double y = obs.y;
-			double landmark_x = map_landmarks.landmark_list[closest_landmark_idx].x_f;
-			double landmark_y = map_landmarks.landmark_list[closest_landmark_idx].y_f;
 
-			// Computing weight using multivariate-gaussian
-			double gaussian_norm = 2 * M_PI * sigma_x * sigma_y;
-			double exponent = (pow(x - landmark_x, 2) / sigma_x_sq) + (pow(y - landmark_y, 2) / sigma_y_sq);
-			double w = exp(-exponent) / gaussian_norm;
+			if (closest_landmark_idx != -1) {
+				double x = obs.x;
+				double y = obs.y;
+				double landmark_x = map_landmarks.landmark_list[closest_landmark_idx].x_f;
+				double landmark_y = map_landmarks.landmark_list[closest_landmark_idx].y_f;
 
-			if (w > 0) {
-				p.weight *= w;
+				// Computing weight using multivariate-gaussian
+				double gaussian_norm = 2 * M_PI * sigma_x * sigma_y;
+				double exponent = (pow(x - landmark_x, 2) / sigma_x_sq) + (pow(y - landmark_y, 2) / sigma_y_sq);
+				double w = exp(-exponent) / gaussian_norm;
+
+				if (w > 0) {
+					p.weight *= w;
+				}
 			} else {
-				// some epsilon value for changing the weights
-				p.weight *= 0.00001;
+				// If there are no landmarks set weight of this particle to zero
+				p.weight = 0.0;
 			}
 
 			associations.push_back(map_landmarks.landmark_list[closest_landmark_idx].id_i);
@@ -195,7 +197,7 @@ void ParticleFilter::resample() {
 		resample_particles.push_back(particles[distribution(gen)]);
 	}
 
-	particles = resample_particles;
+	particles = std::move(resample_particles);
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
